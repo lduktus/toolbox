@@ -1,0 +1,39 @@
+name: Build
+on:
+  push:
+    branches:
+      - main
+  schedule:
+      - cron: '0 0 * * *'
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: 'toolbox'
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Build Image
+        id: build-image
+        uses: redhat-actions/buildah-build@v2
+        with:
+          image: ${{ env.IMAGE_NAME }}
+          tags: latest ${{ github.sha }}
+          context: ./base
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          containerfiles: |
+            ./base/Containerfile
+      - name: Push To Registry
+        id: push-image
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          image: ${{ steps.build-image.outputs.image }}
+          tags: ${{ steps.build-image.outputs.tags }}
+          registry: ghcr.io/${{ github.repository }}

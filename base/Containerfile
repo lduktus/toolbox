@@ -1,0 +1,6 @@
+FROM registry.fedoraproject.org/fedora-toolbox:39
+LABEL com.github.containers.toolbox="true" \
+      maintainer="duktus <dev@duktus.pro>"
+
+COPY scripts/ /build
+RUN /usr/bin/bash /build/install.sh && rm -rf /build
